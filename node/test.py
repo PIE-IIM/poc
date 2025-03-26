@@ -2,25 +2,43 @@ import machine
 import dht
 import time
 import urequests
+import network
 
-# Initialisation des capteurs
-# Capteur DHT11 sur GP16 (Pin 21)
+#Initialisation des capteurs
+#Capteur DHT11 sur GP16 (Pin 21)
 capteur_dht = dht.DHT11(machine.Pin(13))
 
-# Capteur de luminosité connecté à ADC0 (GP26)
+#Capteur de luminosité connecté à ADC0 (GP26)
 capteur_luminosite = machine.ADC(26)
 
-# Capteur de niveau d'eau sur GP28 (ADC2)
+#Capteur de niveau d'eau sur GP28 (ADC2)
 capteur_eau = machine.ADC(28)
 
-# Capteur d'humidité dans le sol sur GP28 (ADC2)
+#Capteur d'humidité dans le sol sur GP28 (ADC2)
 capteur_sol = machine.ADC(27)
 
-# URL du backend Node.js
-backend_url = "http://192.168.1.100:3000"  # Remplacez par l'adresse IP ou le nom de domaine de votre backend
+#URL du backend Node.js
+backend_url = "http://10.2.104.40:3000"  # Remplacez par l'adresse IP locale de votre PC
 
-# Petite pause pour la stabilité
-time.sleep(2)
+#Configuration du module ESP8266
+def connect_wifi(ssid, password):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+
+    # Attendre la connexion
+    while not wlan.isconnected():
+        print("Connexion en cours...")
+        time.sleep(1)
+
+    print("Connecté au réseau Wi-Fi")
+    print("Adresse IP :", wlan.ifconfig()[0])
+
+#Remplacez par votre SSID et mot de passe Wi-Fi
+ssid = "PoleDeVinci_Private"
+password = "Creatvive_Lab_2024"
+
+connect_wifi(ssid, password)
 
 def send_data_to_backend(endpoint, data):
     url = f"{backend_url}/{endpoint}"
