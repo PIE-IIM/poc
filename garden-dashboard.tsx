@@ -623,7 +623,7 @@ useEffect(() => {
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Luminositer</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-medium">Luminosité</CardTitle>
                         <Leaf className="h-4 w-4 text-[#4a8f3c]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
@@ -637,16 +637,16 @@ useEffect(() => {
                   {/* Graphique de pH */}
                   <Card className="border-[#e0e9d9] bg-white">
                     <CardHeader className="pb-2 sm:pb-6">
-                      <CardTitle className="text-base sm:text-lg">Niveau d'acidité du sol</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm">Données des 7 derniers jours</CardDescription>
+                      <CardTitle className="text-base sm:text-lg">Niveau de Luminosité</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">Données des 12 dernieres secondes</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={luminosityHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="day" />
-                            <YAxis domain={[5.5, 7.0]} />
+                            <XAxis />
+                            <YAxis domain={[0, 100]} />
                             <Tooltip />
                             <Line type="monotone" dataKey="value" stroke="#d88c4a" strokeWidth={2} />
                             <Line type="monotone" dataKey="optimal" stroke="#82ca9d" strokeDasharray="5 5" />
@@ -659,8 +659,8 @@ useEffect(() => {
                   {/* Graphique d'humidité */}
                   <Card className="border-[#e0e9d9] bg-white">
                     <CardHeader className="pb-2 sm:pb-6">
-                      <CardTitle className="text-base sm:text-lg">Évolution de l'humidité</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm">Données des 7 derniers jours</CardDescription>
+                      <CardTitle className="text-base sm:text-lg">Évolution de l'humidité de l'air</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">Données des 12 dernieres secondes</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
@@ -672,8 +672,8 @@ useEffect(() => {
                                 <stop offset="95%" stopColor="#4a8fd8" stopOpacity={0.1} />
                               </linearGradient>
                             </defs>
-                            <XAxis dataKey="day" />
-                            <YAxis domain={[40, 80]} />
+                            <XAxis />
+                            <YAxis domain={[0, 100]} />
                             <CartesianGrid strokeDasharray="3 3" />
                             <Tooltip />
                             <Area
@@ -693,16 +693,16 @@ useEffect(() => {
                   {/* Graphique de pH */}
                   <Card className="border-[#e0e9d9] bg-white">
                     <CardHeader className="pb-2 sm:pb-6">
-                      <CardTitle className="text-base sm:text-lg">Niveau d'acidité du sol</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm">Données des 7 derniers jours</CardDescription>
+                      <CardTitle className="text-base sm:text-lg">Niveau de l'humidité dans le sol</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">Données des 12 dernieres secondes</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={eauHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="day" />
-                            <YAxis domain={[5.5, 7.0]} />
+                            <XAxis />
+                            <YAxis domain={[0, 100]} />
                             <Tooltip />
                             <Line type="monotone" dataKey="value" stroke="#d88c4a" strokeWidth={2} />
                             <Line type="monotone" dataKey="optimal" stroke="#82ca9d" strokeDasharray="5 5" />
@@ -716,15 +716,15 @@ useEffect(() => {
                   <Card className="border-[#e0e9d9] bg-white">
                     <CardHeader className="pb-2 sm:pb-6">
                       <CardTitle className="text-base sm:text-lg">Évolution de la température</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm">Données des 7 derniers jours</CardDescription>
+                      <CardDescription className="text-xs sm:text-sm">Données des 12 dernieres secondes</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={temperatureHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="day" />
-                            <YAxis />
+                            <XAxis />
+                            <YAxis domain={[0, 50]} />
                             <Tooltip />
                             <Legend />
                             <Line
