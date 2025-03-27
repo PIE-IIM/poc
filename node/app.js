@@ -51,6 +51,26 @@ app.post("/api/niveau_eau", (req, res) => {
     res.status(200).send("Données reçues avec succès");
 });
 
+app.get("/api/temperature", (req, res) => {
+    res.json({ temperature: sensorData.temperature });
+});
+
+app.get("/api/humidite", (req, res) => {
+    res.json({ humidite: sensorData.humidite });
+});
+
+app.get("/api/sol", (req, res) => {
+    res.json({ tension_sol: sensorData.tension_sol });
+});
+
+app.get("/api/luminosite", (req, res) => {
+    res.json({ pourcentage_luminosite: sensorData.pourcentage_luminosite });
+});
+
+app.get("/api/niveau_eau", (req, res) => {
+    res.json({ valeur_eau: sensorData.valeur_eau });
+});
+
 app.get("/api/sensorData", (req, res) => {
     res.json(sensorData);
 });
