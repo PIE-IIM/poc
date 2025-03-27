@@ -18,11 +18,11 @@ const SensorDataComponent = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const temperature = await axios.get('http://localhost:3000/api/temperature');
-                const humidite = await axios.get('http://localhost:3000/api/humidite');
-                const sol = await axios.get('http://localhost:3000/api/sol');
-                const luminosite = await axios.get('http://localhost:3000/api/luminosite');
-                const niveau_eau = await axios.get('http://localhost:3000/api/niveau_eau');
+                const temperature = await axios.get('http://localhost:3001/api/temperature');
+                const humidite = await axios.get('http://localhost:3001/api/humidite');
+                const sol = await axios.get('http://localhost:3001/api/sol');
+                const luminosite = await axios.get('http://localhost:3001/api/luminosite');
+                const niveau_eau = await axios.get('http://localhost:3001/api/niveau_eau');
 
                 const data = {
                     temperature: temperature.data.temperature,
@@ -40,6 +40,7 @@ const SensorDataComponent = () => {
         };
 
         fetchData();
+        window.location.reload()
     }, []);
 
     useEffect(() => {

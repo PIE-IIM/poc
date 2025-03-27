@@ -61,11 +61,50 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
+import axios from "axios"
 
 export default function GardenDashboard() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [isMobile, setIsMobile] = useState(false)
+
+  const [sensorData, setSensorData] = useState({
+    temperature: null,
+    humidite: null,
+    pourcentage_luminosite: null,
+    valeur_eau: null,
+    tension_sol: null
+  })
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const temperature = await axios.get("http://localhost:3001/api/temperature")
+        const humidite = await axios.get("http://localhost:3001/api/humidite")
+        const sol = await axios.get("http://localhost:3001/api/sol")
+        const luminosite = await axios.get("http://localhost:3001/api/luminosite")
+        const niveau_eau = await axios.get("http://localhost:3001/api/niveau_eau")
+  
+        const data = {
+          temperature: temperature.data.temperature,
+          humidite: humidite.data.humidite,
+          pourcentage_luminosite: luminosite.data.pourcentage_luminosite,
+          valeur_eau: niveau_eau.data.valeur_eau,
+          tension_sol: sol.data.tension_sol,
+        }
+  
+        setSensorData(data)
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données :", error)
+      }
+    }
+
+
+    fetchData()
+    const interval = setInterval(fetchData, 2000) // ← met à jour toutes les 2 secondes
+  
+    return () => clearInterval(interval)
+  }, [])
 
   // Vérifier si l'écran est mobile
   useEffect(() => {
@@ -82,35 +121,62 @@ export default function GardenDashboard() {
   }, [])
 
   // Données pour les graphiques
-  const humidityData = [
-    { day: "Lun", value: 65, optimal: 65 },
-    { day: "Mar", value: 55, optimal: 65 },
-    { day: "Mer", value: 70, optimal: 65 },
-    { day: "Jeu", value: 60, optimal: 65 },
-    { day: "Ven", value: 75, optimal: 65 },
-    { day: "Sam", value: 68, optimal: 65 },
-    { day: "Dim", value: 62, optimal: 65 },
-  ]
+  const [humidityHistory, setHumidityHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+const [temperatureHistory, setTemperatureHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+const [luminosityHistory, setLuminosityHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+const [eauHistory, setEauHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
 
-  const phData = [
-    { day: "Lun", value: 6.0, optimal: 6.5 },
-    { day: "Mar", value: 6.5, optimal: 6.5 },
-    { day: "Mer", value: 6.3, optimal: 6.5 },
-    { day: "Jeu", value: 6.7, optimal: 6.5 },
-    { day: "Ven", value: 6.4, optimal: 6.5 },
-    { day: "Sam", value: 6.6, optimal: 6.5 },
-    { day: "Dim", value: 6.5, optimal: 6.5 },
-  ]
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const tempRes = await axios.get("http://localhost:3001/api/temperature")
+      const humRes = await axios.get("http://localhost:3001/api/humidite")
+      const lumiRes = await axios.get("http://localhost:3001/api/luminosite")
+      const eauRes = await axios.get("http://localhost:3001/api/niveau_eau")
 
-  const temperatureData = [
-    { day: "Lun", value: 21, optimal: 22 },
-    { day: "Mar", value: 23, optimal: 22 },
-    { day: "Mer", value: 24, optimal: 22 },
-    { day: "Jeu", value: 22, optimal: 22 },
-    { day: "Ven", value: 20, optimal: 22 },
-    { day: "Sam", value: 21, optimal: 22 },
-    { day: "Dim", value: 22, optimal: 22 },
-  ]
+      const temp = tempRes.data.temperature
+      const hum = humRes.data.humidite
+      const lumi = lumiRes.data.pourcentage_luminosite
+      const eau = eauRes.data.valeur_eau
+
+      setSensorData(prev => ({
+        ...prev,
+        temperature: temp,
+        humidite: hum,
+        pourcentage_luminosite: lumi,
+        valeur_eau: eau,
+      }))
+
+      const updateHistory = (prev, newValue, optimal = 65) => {
+        const date = new Date()
+        const day = date.toLocaleDateString("fr-FR", { weekday: "short" })
+        const formattedDay = day.charAt(0).toUpperCase() + day.slice(1, 3) // "Lun", "Mar", etc.
+
+        const newEntry = {
+          day: formattedDay,
+          value: newValue,
+          optimal,
+        }
+
+        return [...prev.slice(-6), newEntry] // Garde les 7 dernières valeurs
+      }
+
+      setHumidityHistory(prev => updateHistory(prev, hum, 65))
+      setTemperatureHistory(prev => updateHistory(prev, temp, 22))
+      setLuminosityHistory(prev => updateHistory(prev, Math.round(lumi), 85))
+      setEauHistory(prev => updateHistory(prev, Math.round((eau / 65535) * 100), 70)) // Eau convertie en %
+
+    } catch (err) {
+      console.error("Erreur fetch capteurs:", err)
+    }
+  }
+
+  fetchData()
+  const interval = setInterval(fetchData, 2000) // actualise toutes les 2 sec
+
+  return () => clearInterval(interval)
+}, [])
+  
 
   // Données pour l'historique des activités
   const activityHistory = [
@@ -524,22 +590,22 @@ export default function GardenDashboard() {
                   <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
                     <Card className="border-[#e0e9d9] bg-white">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Humidité moyenne</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-medium">Humidité de l'air</CardTitle>
                         <Droplets className="h-4 w-4 text-[#4a8fd8]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
-                        <div className="text-xl sm:text-2xl font-bold">68%</div>
+                        <div className="text-xl sm:text-2xl font-bold">{sensorData.humidite !== null && `${sensorData.humidite}%`}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 60-70%</p>
                         <Progress value={68} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#4a8fd8]" />
                       </CardContent>
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6">
-                        <CardTitle className="text-xs sm:text-sm font-medium">pH du sol</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-medium">Humidité du sol</CardTitle>
                         <Activity className="h-4 w-4 text-[#d88c4a]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
-                        <div className="text-xl sm:text-2xl font-bold">6.5</div>
+                        <div className="text-xl sm:text-2xl font-bold">{sensorData.valeur_eau !== null && `${Math.round((sensorData.valeur_eau / 65535) * 100)}%`}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 6.0-7.0</p>
                         <Progress value={65} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#d88c4a]" />
                       </CardContent>
@@ -550,23 +616,45 @@ export default function GardenDashboard() {
                         <Thermometer className="h-4 w-4 text-[#d84a4a]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
-                        <div className="text-xl sm:text-2xl font-bold">22°C</div>
+                        <div className="text-xl sm:text-2xl font-bold">{sensorData.temperature !== null && `${sensorData.temperature}°C`}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 18-24°C</p>
                         <Progress value={75} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#d84a4a]" />
                       </CardContent>
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6">
-                        <CardTitle className="text-xs sm:text-sm font-medium">Santé des plantes</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-medium">Luminositer</CardTitle>
                         <Leaf className="h-4 w-4 text-[#4a8f3c]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
-                        <div className="text-xl sm:text-2xl font-bold">Bonne</div>
+                        <div className="text-xl sm:text-2xl font-bold">{sensorData.pourcentage_luminosite !== null && `${Math.round(sensorData.pourcentage_luminosite)}%`}</div>
                         <p className="text-xs text-muted-foreground">4 alertes mineures</p>
                         <Progress value={85} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#4a8f3c]" />
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* Graphique de pH */}
+                  <Card className="border-[#e0e9d9] bg-white">
+                    <CardHeader className="pb-2 sm:pb-6">
+                      <CardTitle className="text-base sm:text-lg">Niveau d'acidité du sol</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">Données des 7 derniers jours</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                      <div className="h-[200px] sm:h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={luminosityHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day" />
+                            <YAxis domain={[5.5, 7.0]} />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="value" stroke="#d88c4a" strokeWidth={2} />
+                            <Line type="monotone" dataKey="optimal" stroke="#82ca9d" strokeDasharray="5 5" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Graphique d'humidité */}
                   <Card className="border-[#e0e9d9] bg-white">
@@ -577,7 +665,7 @@ export default function GardenDashboard() {
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={humidityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <AreaChart data={humidityHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="colorHumidity" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#4a8fd8" stopOpacity={0.8} />
@@ -611,7 +699,7 @@ export default function GardenDashboard() {
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={phData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <LineChart data={eauHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="day" />
                             <YAxis domain={[5.5, 7.0]} />
@@ -633,7 +721,7 @@ export default function GardenDashboard() {
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={temperatureData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <LineChart data={temperatureHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="day" />
                             <YAxis />
@@ -1383,4 +1471,3 @@ export default function GardenDashboard() {
     </SidebarProvider>
   )
 }
-
