@@ -9,10 +9,10 @@ import network
 capteur_dht = dht.DHT11(machine.Pin(13))
 
 #Capteur de luminosité connecté à ADC0 (GP26)
-capteur_luminosite = machine.ADC(26)
+capteur_luminosite = machine.ADC(28)
 
 #Capteur de niveau d'eau sur GP28 (ADC2)
-capteur_eau = machine.ADC(28)
+capteur_eau = machine.ADC(26)
 
 #Capteur d'humidité dans le sol sur GP28 (ADC2)
 capteur_sol = machine.ADC(27)
@@ -70,7 +70,7 @@ while True:
 
     # Lecture du capteur de luminosité
     valeur_luminosite = capteur_luminosite.read_u16()
-    pourcentage_luminosite = (valeur_luminosite / 65535) * 100
+    pourcentage_luminosite = (1 - (valeur_luminosite / 65535)) * 100
     print("Luminosité : {:.2f}%".format(pourcentage_luminosite))
 
     # Envoyer les données de luminosité au backend
@@ -90,15 +90,18 @@ while True:
     print("Tension approx. : {:.2f} V".format(tension_sol))
 
     # Envoyer les données d'humidité du sol au backend
-    send_data_to_backend("api/sol", {"humidite_sol": tension_sol})
+    send_data_to_backend("api/sol", {
+    "humidite_sol": tension_sol,
+    "valeur_brute_sol": valeur_sol
+})
 
     # Affichage simple du niveau d'humidité dans le sol
-    if valeur_sol > 50000:
-        print("💧 Niveau élevé")
-    elif valeur_sol > 20000:
+    if valeur_sol < 20000:
+        print("💧 Niveau élevé")  # Très humide
+    elif valeur_sol < 50000:
         print("🌊 Niveau moyen")
     else:
-        print("⚠️ Niveau bas ou sec")
+        print("⚠️ Niveau bas ou sec")  # Sec
 
     print("-------------------------")
     time.sleep(2)
