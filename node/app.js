@@ -31,9 +31,11 @@ app.post("/api/humidite", (req, res) => {
 });
 
 app.post("/api/sol", (req, res) => {
-    const { humidite_sol } = req.body;
+    const { humidite_sol, valeur_brute_sol } = req.body;
     sensorData.tension_sol = humidite_sol;
+    sensorData.valeur_brute_sol = valeur_brute_sol; 
     console.log("Humidité du sol reçue :", humidite_sol);
+    console.log("Valeur brute du capteur de sol :", valeur_brute_sol);
     res.status(200).send("Données reçues avec succès");
 });
 
@@ -60,7 +62,7 @@ app.get("/api/humidite", (req, res) => {
 });
 
 app.get("/api/sol", (req, res) => {
-    res.json({ tension_sol: sensorData.tension_sol });
+    res.json({ tension_sol: sensorData.tension_sol, valeur_brute_sol: sensorData.valeur_brute_sol });
 });
 
 app.get("/api/luminosite", (req, res) => {

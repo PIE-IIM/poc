@@ -18,7 +18,7 @@ capteur_eau = machine.ADC(28)
 capteur_sol = machine.ADC(27)
 
 #URL du backend Node.js
-backend_url = "http://10.2.104.40:3000"  # Remplacez par l'adresse IP locale de votre PC
+backend_url = "http://10.2.104.40:3001"  # Remplacez par l'adresse IP locale de votre PC
 
 #Configuration du module ESP8266
 def connect_wifi(ssid, password):

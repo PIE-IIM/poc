@@ -73,7 +73,8 @@ export default function GardenDashboard() {
     humidite: null,
     pourcentage_luminosite: null,
     valeur_eau: null,
-    tension_sol: null
+    tension_sol: null,
+    valeur_brute_sol: null,
   })
 
   useEffect(() => {
@@ -90,15 +91,16 @@ export default function GardenDashboard() {
           humidite: humidite.data.humidite,
           pourcentage_luminosite: luminosite.data.pourcentage_luminosite,
           valeur_eau: niveau_eau.data.valeur_eau,
-          tension_sol: sol.data.tension_sol,
+          tension_sol: sol.data.humidite_sol, // tension (V)
+          valeur_brute_sol: sol.data.valeur_brute_sol, // valeur brute (0 - 65535)
         }
+        
   
         setSensorData(data)
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error)
       }
     }
-
 
     fetchData()
     const interval = setInterval(fetchData, 2000) // ← met à jour toutes les 2 secondes
@@ -122,9 +124,9 @@ export default function GardenDashboard() {
 
   // Données pour les graphiques
   const [humidityHistory, setHumidityHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
-const [temperatureHistory, setTemperatureHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
-const [luminosityHistory, setLuminosityHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
-const [eauHistory, setEauHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+  const [temperatureHistory, setTemperatureHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+  const [luminosityHistory, setLuminosityHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
+  const [solHistory, setSolHistory] = useState<{ day: string; value: number; optimal: number }[]>([])
 
 useEffect(() => {
   const fetchData = async () => {
@@ -132,25 +134,27 @@ useEffect(() => {
       const tempRes = await axios.get("http://localhost:3001/api/temperature")
       const humRes = await axios.get("http://localhost:3001/api/humidite")
       const lumiRes = await axios.get("http://localhost:3001/api/luminosite")
-      const eauRes = await axios.get("http://localhost:3001/api/niveau_eau")
+      //const eauRes = await axios.get("http://localhost:3001/api/niveau_eau")
+      const solRes = await axios.get("http://localhost:3001/api/sol") // ✅ ici on récupère les données du sol
 
       const temp = tempRes.data.temperature
       const hum = humRes.data.humidite
       const lumi = lumiRes.data.pourcentage_luminosite
-      const eau = eauRes.data.valeur_eau
+      //const eau = eauRes.data.valeur_eau
+      const valeurSol = solRes.data.valeur_brute_sol // ✅ on extrait la valeur brute ici
 
       setSensorData(prev => ({
         ...prev,
         temperature: temp,
         humidite: hum,
         pourcentage_luminosite: lumi,
-        valeur_eau: eau,
+        valeur_brute_sol: valeurSol, // ✅ on la met dans le state
       }))
 
       const updateHistory = (prev, newValue, optimal = 65) => {
         const date = new Date()
         const day = date.toLocaleDateString("fr-FR", { weekday: "short" })
-        const formattedDay = day.charAt(0).toUpperCase() + day.slice(1, 3) // "Lun", "Mar", etc.
+        const formattedDay = day.charAt(0).toUpperCase() + day.slice(1, 3)
 
         const newEntry = {
           day: formattedDay,
@@ -158,21 +162,20 @@ useEffect(() => {
           optimal,
         }
 
-        return [...prev.slice(-6), newEntry] // Garde les 7 dernières valeurs
+        return [...prev.slice(-6), newEntry]
       }
 
       setHumidityHistory(prev => updateHistory(prev, hum, 65))
       setTemperatureHistory(prev => updateHistory(prev, temp, 22))
       setLuminosityHistory(prev => updateHistory(prev, Math.round(lumi), 85))
-      setEauHistory(prev => updateHistory(prev, Math.round((eau / 65535) * 100), 70)) // Eau convertie en %
-
+      setSolHistory(prev => updateHistory(prev, Math.round((1 - (valeurSol / 65535)) * 100), 70)) // ✅ on calcule le pourcentage d'humidité du sol ici
     } catch (err) {
       console.error("Erreur fetch capteurs:", err)
     }
   }
 
   fetchData()
-  const interval = setInterval(fetchData, 2000) // actualise toutes les 2 sec
+  const interval = setInterval(fetchData, 2000)
 
   return () => clearInterval(interval)
 }, [])
@@ -596,7 +599,7 @@ useEffect(() => {
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
                         <div className="text-xl sm:text-2xl font-bold">{sensorData.humidite !== null && `${sensorData.humidite}%`}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 60-70%</p>
-                        <Progress value={68} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#4a8fd8]" />
+                        <Progress value={68} className="mt-1 sm:mt-2 bg-[#e0e9d9] [&>div]:bg-[#4a8fd8]" />
                       </CardContent>
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
@@ -605,9 +608,11 @@ useEffect(() => {
                         <Activity className="h-4 w-4 text-[#d88c4a]" />
                       </CardHeader>
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
-                        <div className="text-xl sm:text-2xl font-bold">{sensorData.valeur_eau !== null && `${Math.round((sensorData.valeur_eau / 65535) * 100)}%`}</div>
+                        <div className="text-xl sm:text-2xl font-bold">{sensorData.valeur_brute_sol != null && !isNaN(sensorData.valeur_brute_sol) && (
+  `${Math.round((1 - (sensorData.valeur_brute_sol / 65535)) * 100)}%`
+)}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 6.0-7.0</p>
-                        <Progress value={65} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#d88c4a]" />
+                        <Progress value={65} className="mt-1 sm:mt-2 bg-[#e0e9d9] [&>div]:bg-[#d88c4a]" />
                       </CardContent>
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
@@ -618,7 +623,7 @@ useEffect(() => {
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
                         <div className="text-xl sm:text-2xl font-bold">{sensorData.temperature !== null && `${sensorData.temperature}°C`}</div>
                         <p className="text-xs text-muted-foreground">Optimal: 18-24°C</p>
-                        <Progress value={75} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#d84a4a]" />
+                        <Progress value={75} className="mt-1 sm:mt-2 bg-[#e0e9d9] [&>div]:bg-[#d84a4a]" />
                       </CardContent>
                     </Card>
                     <Card className="border-[#e0e9d9] bg-white">
@@ -629,7 +634,7 @@ useEffect(() => {
                       <CardContent className="px-3 sm:px-6 py-2 sm:py-4">
                         <div className="text-xl sm:text-2xl font-bold">{sensorData.pourcentage_luminosite !== null && `${Math.round(sensorData.pourcentage_luminosite)}%`}</div>
                         <p className="text-xs text-muted-foreground">4 alertes mineures</p>
-                        <Progress value={85} className="mt-1 sm:mt-2 bg-[#e0e9d9]" indicatorClassName="bg-[#4a8f3c]" />
+                        <Progress value={85} className="mt-1 sm:mt-2 bg-[#e0e9d9] [&>div]:bg-[#4a8f3c]" />
                       </CardContent>
                     </Card>
                   </div>
@@ -699,7 +704,7 @@ useEffect(() => {
                     <CardContent className="pl-2">
                       <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={eauHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <LineChart data={solHistory} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis />
                             <YAxis domain={[0, 100]} />
